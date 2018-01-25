@@ -33,6 +33,7 @@ dataloader = torch.utils.data.DataLoader(dataset,
                                          num_workers = 2)
 # We use dataLoader to get the images of the training set batch by batch.
 
+
 # Weights_init function that takes as input a neural network m and that will initialize all its weights.
 def weights_init(m):
     classname = m.__class__.__name__
@@ -50,7 +51,7 @@ class G(nn.Module):
         super(G, self).__init__()
         self.main = nn.Sequential(
 
-            # Applying all inverse convolution
+            # Applying all inverse convolution (input noise)
 
             nn.ConvTranspose2d(100, 512, 4, 1, 0, bias=False),
             nn.BatchNorm2d(512),
@@ -67,6 +68,53 @@ class G(nn.Module):
             nn.ConvTranspose2d(64, 3, 4, 2, 1, bias=False),
             nn.Tanh()
         )
+
+        def forward(self, input):
+            output = self.main(input)
+            return output
+
+
+netG = G()
+netG.apply(weights_init)
+
+
+# Defining Discriminator
+class D(nn.Module):
+
+    def __init__(self):
+        super(D, self).__init__()
+        self.main = nn.Sequential(
+
+            # Applying all convolution (input images from generator) to get 0 < p < 1
+            nn.Conv2d(3, 64, 4, 2, 1, bias=False),
+            # leaky works better than ReLU
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(64, 128, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(128),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(128, 256, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(256, 512, 4, 2, 1, bias=False),
+            nn.BatchNorm2d(512),
+            nn.LeakyReLU(0.2, inplace=True),
+            nn.Conv2d(512, 1, 4, 1, 0, bias=False),
+            nn.Sigmoid()
+        )
+
+        def forward(self, input):
+            output = self.main(input)
+            return output.view(-1)
+
+
+netD = G()
+netD.apply(weights_init)
+
+
+
+
+
+
 
 
 
